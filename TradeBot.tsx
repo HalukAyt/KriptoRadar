@@ -70,3 +70,15 @@ export const tradeLimitOrder = async (side: 'BUY' | 'SELL', quantity: string, pr
     alert(`Limit order başarısız: ${error.message || 'Bilinmeyen hata'}`);
   }
 };
+
+// ✅ Aktif Limit Emirlerini Al
+export const getLimitOrders = async (): Promise<any[]> => {
+  try {
+    const orders = await binance.openOrders({ symbol: 'BTCUSDT' }); // BTC/USDT paritesi için aktif limit emirleri al
+    return orders;
+  } catch (error) {
+    console.error('Limit emirlerini alırken hata oluştu:', error);
+    return [];
+  }
+};
+
