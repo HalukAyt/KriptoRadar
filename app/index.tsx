@@ -1,65 +1,81 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ScrollView, StyleSheet, Text, View, StatusBar, TextInput, Button } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient'; // Gradient için gerekli
 import LivePrice from '../LivePrice';
 import TradingViewChart from '../TradingViewChart';
+import { getBtcBalance, getUsdtBalance, tradeMarketOrder } from '../TradeBot'; // Binance API fonksiyonları
 
 export default function App() {
+  const [buyAmount, setBuyAmount] = useState(''); // Alım için USDT miktarı
+  const [sellAmount, setSellAmount] = useState(''); // Satış için BTC miktarı
+  const [btcBalance, setBtcBalance] = useState('0'); // BTC bakiyesi
+  const [usdtBalance, setUsdtBalance] = useState('0'); // USDT bakiyesi
+
+  useEffect(() => {
+    // Binance API'den bakiyeleri alalım
+    async function fetchBalances() {
+      const btcBalance = await getBtcBalance();
+      const usdtBalance = await getUsdtBalance();
+      setBtcBalance(btcBalance);
+      setUsdtBalance(usdtBalance);
+    }
+    fetchBalances();
+  }, []);
+
   return (
     <ScrollView style={styles.container}>
-
+      <StatusBar barStyle="light-content" backgroundColor="#121212" />
+      
       <Text style={styles.title}>KRİPTO RADAR</Text>
-      {/* Canlı fiyat kısmı */}
-      <View style={styles.livePriceContainer}>
-        
+
+      <LinearGradient colors={['#00b894', '#1e1e1e']} style={styles.livePriceContainer}>
         <Text style={styles.sectionTitle}>Canlı Fiyat</Text>
         <LivePrice />
-      </View>
+      </LinearGradient>
 
-      {/* TradingView grafik kısmı */}
-      <View style={styles.chartContainer}>
+      <LinearGradient colors={['#00b894', '#1e1e1e']} style={styles.chartContainer}>
         <Text style={styles.sectionTitle}>TradingView Grafik</Text>
         <TradingViewChart />
-      </View>
+      </LinearGradient>
+
+      {/* Alım-Satım İşlemleri */}
+      <LinearGradient colors={['#00b894', '#1e1e1e']} style={styles.tradeContainer}>
+        <Text style={styles.sectionTitle}>Alım-Satım</Text>
+
+        <Text style={styles.balance}>USDT Bakiyen: {usdtBalance} USDT</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Alım miktarını girin (USDT)"
+          placeholderTextColor="#ddd"
+          keyboardType="numeric"
+          value={buyAmount}
+          onChangeText={setBuyAmount}
+        />
+        <Button title="AL (BUY)" onPress={() => tradeMarketOrder('BUY', buyAmount)} color="#00ff00" />
+
+        <Text style={styles.balance}>BTC Bakiyen: {btcBalance} BTC</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="Satım miktarını girin (BTC)"
+          placeholderTextColor="#ddd"
+          keyboardType="numeric"
+          value={sellAmount}
+          onChangeText={setSellAmount}
+        />
+        <Button title="SAT (SELL)" onPress={() => tradeMarketOrder('SELL', sellAmount)} color="#ff0000" />
+      </LinearGradient>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa', // Soft light background
-    paddingHorizontal: 20,
-    paddingTop: 40,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#495057', // Slightly lighter color for section titles
-    marginBottom: 10,
-  },
-  livePriceContainer: {
-    backgroundColor: '#ffffff', // White background for card
-    borderRadius: 15,
-    padding: 20,
-    marginVertical: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 15,
-    elevation: 8, // More prominent shadow for a modern feel
-  },
-  chartContainer: {
-    backgroundColor: '#ffffff', // White background for chart container
-    borderRadius: 15,
-    padding: 15,
-    marginBottom: 40,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 15,
-    elevation: 8, // Same shadow effect for consistency
-  },
-  title:{
-    textAlign:"center",
-    fontSize: 25,
-    fontWeight: "bold"
-  }
+  container: { flex: 1, backgroundColor: '#121212', paddingHorizontal: 20, paddingTop: 40 },
+  sectionTitle: { fontSize: 22, fontWeight: '800', color: '#f1f1f1', marginBottom: 12 },
+  livePriceContainer: { borderRadius: 20, padding: 25, marginVertical: 18 },
+  chartContainer: { borderRadius: 20, padding: 20, marginBottom: 50 },
+  tradeContainer: { borderRadius: 20, padding: 20, marginBottom: 50 },
+  balance: { fontSize: 18, fontWeight: 'bold', color: '#ffffff', marginBottom: 10 },
+  input: { backgroundColor: '#333', color: '#fff', padding: 10, borderRadius: 10, marginBottom: 10 },
+  buttonContainer: { flexDirection: 'row', justifyContent: 'space-around' },
+  title: { textAlign: 'center', fontSize: 32, fontWeight: '900', color: '#ffffff', marginBottom: 20 }
 });
