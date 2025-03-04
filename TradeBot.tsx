@@ -52,4 +52,34 @@ export const tradeMarketOrder = async (side: 'BUY' | 'SELL', quantity: string) =
     console.error('Hata:', error);
   }
 };
+// Limit Alım İşlemi (USDT ile)
+export const tradeLimitOrder = async (side: 'BUY' | 'SELL', quantity: string, price: string) => {
+  try {
+    if (side === 'BUY') {
+      // USDT ile alım işlemi
+      await binance.order({
+        symbol: 'BTCUSDT', // BTC/USDT paritesinde işlem yapıyoruz
+        side: 'BUY',
+        type: 'LIMIT', // Limit emri
+        price: price, // Belirtilen fiyat
+        quantity: quantity, // Alım miktarı (BTC)
+        timeInForce: 'GTC', // Emir bitiş süresi: GTC (Good Till Canceled)
+      });
+      alert(`Başarıyla LIMIT ALIM emri verildi!`);
+    } else if (side === 'SELL') {
+      // BTC ile satım işlemi
+      await binance.order({
+        symbol: 'BTCUSDT', // BTC/USDT paritesinde işlem yapıyoruz
+        side: 'SELL',
+        type: 'LIMIT', // Limit emri
+        price: price, // Belirtilen fiyat
+        quantity: quantity, // Satım miktarı (BTC)
+        timeInForce: 'GTC', // Emir bitiş süresi: GTC (Good Till Canceled)
+      });
+      alert(`Başarıyla LIMIT SATIM emri verildi!`);
+    }
+  } catch (error) {
+    console.error('Hata:', error);
+  }
+};
 

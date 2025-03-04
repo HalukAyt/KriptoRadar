@@ -22,6 +22,24 @@ export default function App() {
     fetchBalances();
   }, []);
 
+  const handleBuy = async () => {
+    await tradeMarketOrder('BUY', buyAmount); // Alım işlemi
+    await fetchBalances(); // İşlem sonrası bakiyeleri güncelle
+  };
+
+  const handleSell = async () => {
+    await tradeMarketOrder('SELL', sellAmount); // Satım işlemi
+    await fetchBalances(); // İşlem sonrası bakiyeleri güncelle
+  };
+
+  // Bakiye güncellemeyi sağlayacak fonksiyon
+  async function fetchBalances() {
+    const btcBalance = await getBtcBalance(); // BTC bakiyesi al
+    const usdtBalance = await getUsdtBalance(); // USDT bakiyesi al
+    setBtcBalance(btcBalance); // BTC bakiyesini güncelle
+    setUsdtBalance(usdtBalance); // USDT bakiyesini güncelle
+  }
+
   return (
     <ScrollView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#121212" />
@@ -51,7 +69,7 @@ export default function App() {
           value={buyAmount}
           onChangeText={setBuyAmount}
         />
-        <Button title="AL (BUY)" onPress={() => tradeMarketOrder('BUY', buyAmount)} color="#00ff00" />
+        <Button title="AL (BUY)" onPress={handleBuy} color="#00ff00" />
 
         <Text style={styles.balance}>BTC Bakiyen: {btcBalance} BTC</Text>
         <TextInput
@@ -62,7 +80,7 @@ export default function App() {
           value={sellAmount}
           onChangeText={setSellAmount}
         />
-        <Button title="SAT (SELL)" onPress={() => tradeMarketOrder('SELL', sellAmount)} color="#ff0000" />
+        <Button title="SAT (SELL)" onPress={handleSell} color="#ff0000" />
       </LinearGradient>
     </ScrollView>
   );
