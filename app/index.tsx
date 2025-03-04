@@ -5,7 +5,7 @@ import LivePrice from '../LivePrice';
 import TradingViewChart from '../TradingViewChart';
 import { getBtcBalance, getUsdtBalance, tradeMarketOrder, tradeLimitOrder, getLimitOrders } from '../TradeBot';
 
-export default function App() {
+export default function Home() {
   const [buyAmount, setBuyAmount] = useState(''); // Alım miktarı (USDT)
   const [buyLimitPrice, setBuyLimitPrice] = useState(''); // Alım limit fiyatı (USDT)
   const [sellAmount, setSellAmount] = useState(''); // Satım miktarı (BTC)
