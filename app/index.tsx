@@ -1,49 +1,58 @@
 import React, { useState, useEffect } from 'react';
 import { ScrollView, StyleSheet, Text, View, StatusBar, TextInput, Button } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient'; // Gradient için gerekli
+import { LinearGradient } from 'expo-linear-gradient'; 
 import LivePrice from '../LivePrice';
 import TradingViewChart from '../TradingViewChart';
-import { getBtcBalance, getUsdtBalance, tradeMarketOrder } from '../TradeBot'; // Binance API fonksiyonları
+import { getBtcBalance, getUsdtBalance, tradeMarketOrder } from '../TradeBot';
 
 export default function App() {
-  const [buyAmount, setBuyAmount] = useState(''); // Alım için USDT miktarı
-  const [sellAmount, setSellAmount] = useState(''); // Satış için BTC miktarı
-  const [btcBalance, setBtcBalance] = useState('0'); // BTC bakiyesi
-  const [usdtBalance, setUsdtBalance] = useState('0'); // USDT bakiyesi
+  const [buyAmount, setBuyAmount] = useState('');
+  const [sellAmount, setSellAmount] = useState('');
+  const [btcBalance, setBtcBalance] = useState('0');
+  const [usdtBalance, setUsdtBalance] = useState('0');
+
+  // Bakiyeleri güncelleyen fonksiyon
+  const fetchBalances = async () => {
+    try {
+      const btc = await getBtcBalance();
+      const usdt = await getUsdtBalance();
+      setBtcBalance(btc);
+      setUsdtBalance(usdt);
+    } catch (error) {
+      console.error('Bakiye çekme hatası:', error);
+    }
+  };
 
   useEffect(() => {
-    // Binance API'den bakiyeleri alalım
-    async function fetchBalances() {
-      const btcBalance = await getBtcBalance();
-      const usdtBalance = await getUsdtBalance();
-      setBtcBalance(btcBalance);
-      setUsdtBalance(usdtBalance);
-    }
-    fetchBalances();
+    fetchBalances(); // İlk açılışta bakiyeleri çek
+    const interval = setInterval(fetchBalances, 1000); // 30 saniyede bir güncelle
+
+    return () => clearInterval(interval); // Component unmount olduğunda temizle
   }, []);
 
   const handleBuy = async () => {
-    await tradeMarketOrder('BUY', buyAmount); // Alım işlemi
-    await fetchBalances(); // İşlem sonrası bakiyeleri güncelle
+    try {
+      await tradeMarketOrder('BUY', buyAmount);
+      setBuyAmount(''); // Input'u temizle
+      fetchBalances(); // Güncelle
+    } catch (error) {
+      console.error('Alım hatası:', error);
+    }
   };
 
   const handleSell = async () => {
-    await tradeMarketOrder('SELL', sellAmount); // Satım işlemi
-    await fetchBalances(); // İşlem sonrası bakiyeleri güncelle
+    try {
+      await tradeMarketOrder('SELL', sellAmount);
+      setSellAmount(''); // Input'u temizle
+      fetchBalances(); // Güncelle
+    } catch (error) {
+      console.error('Satım hatası:', error);
+    }
   };
-
-  // Bakiye güncellemeyi sağlayacak fonksiyon
-  async function fetchBalances() {
-    const btcBalance = await getBtcBalance(); // BTC bakiyesi al
-    const usdtBalance = await getUsdtBalance(); // USDT bakiyesi al
-    setBtcBalance(btcBalance); // BTC bakiyesini güncelle
-    setUsdtBalance(usdtBalance); // USDT bakiyesini güncelle
-  }
 
   return (
     <ScrollView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#121212" />
-      
       <Text style={styles.title}>KRİPTO RADAR</Text>
 
       <LinearGradient colors={['#00b894', '#1e1e1e']} style={styles.livePriceContainer}>
@@ -56,7 +65,6 @@ export default function App() {
         <TradingViewChart />
       </LinearGradient>
 
-      {/* Alım-Satım İşlemleri */}
       <LinearGradient colors={['#00b894', '#1e1e1e']} style={styles.tradeContainer}>
         <Text style={styles.sectionTitle}>Alım-Satım</Text>
 
@@ -94,6 +102,5 @@ const styles = StyleSheet.create({
   tradeContainer: { borderRadius: 20, padding: 20, marginBottom: 50 },
   balance: { fontSize: 18, fontWeight: 'bold', color: '#ffffff', marginBottom: 10 },
   input: { backgroundColor: '#333', color: '#fff', padding: 10, borderRadius: 10, marginBottom: 10 },
-  buttonContainer: { flexDirection: 'row', justifyContent: 'space-around' },
   title: { textAlign: 'center', fontSize: 32, fontWeight: '900', color: '#ffffff', marginBottom: 20 }
 });
