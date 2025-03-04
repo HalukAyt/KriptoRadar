@@ -1,85 +1,72 @@
+import { BINANCE_API_KEY, BINANCE_API_SECRET } from '@env';
 const Binance = require('binance-api-react-native').default;
 
+// Binance API Bağlantısı
 const binance = new Binance({
-  apiKey: "UzE48eLkDlZyEpbI4TkWqRdmXcGpUmOWbKk7qvEEvTT7VXPau3unraX9xvbXn6UB",
-  apiSecret: "rRn3WzyPa8JknRjh8G0M5wxXWUOU2tapSZH09kZKTQurJoh2G8zD8b0aH0vV5yWb",
+  apiKey: BINANCE_API_KEY,
+  apiSecret: BINANCE_API_SECRET,
 });
 
-// BTC Bakiyesini Al
-// USDT Bakiyesini Al
-export const getUsdtBalance = async () => {
-  const account = await binance.accountInfo();
-  const usdtBalance = account.balances.find((b: { asset: string; free: string }) => b.asset === 'USDT');
-  return usdtBalance ? usdtBalance.free : '0';
-};
-
-export const getBtcBalance = async () => {
+// ✅ BTC Bakiyesini Al
+export const getBtcBalance = async (): Promise<string> => {
   try {
     const account = await binance.accountInfo();
-    const btcBalance = account.balances.find((b: { asset: string; free: string }) => b.asset === 'BTC');
+    const btcBalance = account.balances.find((b: { asset: string }) => b.asset === 'BTC');
     return btcBalance ? btcBalance.free : '0';
-  } catch (error) {
-    console.error('Hata:', error);
-    return '0'; // Hata durumunda 0 döndür
+  } catch (error: any) {
+    console.error('BTC bakiyesi alınırken hata oluştu:', error);
+    return '0'; 
   }
 };
 
-// Alım-Satım İşlemi Yap
-// Alım-Satım İşlemi Yap (USDT cinsinden)
-// Alım-Satım İşlemi Yap (USDT ile al, BTC ile sat)
+// ✅ USDT Bakiyesini Al
+export const getUsdtBalance = async (): Promise<string> => {
+  try {
+    const account = await binance.accountInfo();
+    const usdtBalance = account.balances.find((b: { asset: string }) => b.asset === 'USDT');
+    return usdtBalance ? usdtBalance.free : '0';
+  } catch (error: any) {
+    console.error('USDT bakiyesi alınırken hata oluştu:', error);
+    return '0'; 
+  }
+};
+
+// ✅ Market Order ile Alım / Satım İşlemi Yap
 export const tradeMarketOrder = async (side: 'BUY' | 'SELL', quantity: string) => {
   try {
-    if (side === 'BUY') {
-      // USDT ile alım yapıyoruz
-      await binance.order({
-        symbol: 'BTCUSDT', // BTC/USDT paritesinde işlem yapıyoruz
-        side: 'BUY',
-        type: 'MARKET',
-        quoteOrderQty: quantity, // USDT cinsinden miktar
-      });
-      alert(`Başarıyla ALIM yapıldı!`);
-    } else if (side === 'SELL') {
-      // BTC ile satım yapıyoruz
-      await binance.order({
-        symbol: 'BTCUSDT', // BTC/USDT paritesinde işlem yapıyoruz
-        side: 'SELL',
-        type: 'MARKET',
-        quantity, // BTC cinsinden miktar
-      });
-      alert(`Başarıyla SATIM yapıldı!`);
-    }
-  } catch (error) {
-    console.error('Hata:', error);
-  }
-};
-// Limit Alım İşlemi (USDT ile)
-export const tradeLimitOrder = async (side: 'BUY' | 'SELL', quantity: string, price: string) => {
-  try {
-    if (side === 'BUY') {
-      // USDT ile alım işlemi
-      await binance.order({
-        symbol: 'BTCUSDT', // BTC/USDT paritesinde işlem yapıyoruz
-        side: 'BUY',
-        type: 'LIMIT', // Limit emri
-        price: price, // Belirtilen fiyat
-        quantity: quantity, // Alım miktarı (BTC)
-        timeInForce: 'GTC', // Emir bitiş süresi: GTC (Good Till Canceled)
-      });
-      alert(`Başarıyla LIMIT ALIM emri verildi!`);
-    } else if (side === 'SELL') {
-      // BTC ile satım işlemi
-      await binance.order({
-        symbol: 'BTCUSDT', // BTC/USDT paritesinde işlem yapıyoruz
-        side: 'SELL',
-        type: 'LIMIT', // Limit emri
-        price: price, // Belirtilen fiyat
-        quantity: quantity, // Satım miktarı (BTC)
-        timeInForce: 'GTC', // Emir bitiş süresi: GTC (Good Till Canceled)
-      });
-      alert(`Başarıyla LIMIT SATIM emri verildi!`);
-    }
-  } catch (error) {
-    console.error('Hata:', error);
+    const orderData = {
+      symbol: 'BTCUSDT',
+      side,
+      type: 'MARKET',
+      ...(side === 'BUY' ? { quoteOrderQty: quantity } : { quantity }),
+    };
+
+    const orderResponse = await binance.order(orderData);
+    console.log(`${side} Market Order Başarılı:`, orderResponse);
+    alert(`Başarıyla ${side === 'BUY' ? 'ALIM' : 'SATIM'} yapıldı!`);
+  } catch (error: any) {
+    console.error(`${side} market order hatası:`, error);
+    alert(`İşlem başarısız: ${error.message || 'Bilinmeyen hata'}`);
   }
 };
 
+// ✅ Limit Order ile Alım / Satım İşlemi Yap
+export const tradeLimitOrder = async (side: 'BUY' | 'SELL', quantity: string, price: string) => {
+  try {
+    const orderData = {
+      symbol: 'BTCUSDT',
+      side,
+      type: 'LIMIT',
+      timeInForce: 'GTC', // GTC: Good 'Til Canceled
+      quantity,
+      price,
+    };
+
+    const orderResponse = await binance.order(orderData);
+    console.log(`${side} Limit Order Başarılı:`, orderResponse);
+    alert(`Limit ${side === 'BUY' ? 'ALIM' : 'SATIM'} emri verildi!`);
+  } catch (error: any) {
+    console.error(`${side} limit order hatası:`, error);
+    alert(`Limit order başarısız: ${error.message || 'Bilinmeyen hata'}`);
+  }
+};

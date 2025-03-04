@@ -25,7 +25,7 @@ export default function App() {
 
   useEffect(() => {
     fetchBalances(); // İlk açılışta bakiyeleri çek
-    const interval = setInterval(fetchBalances, 1000); // 30 saniyede bir güncelle
+    const interval = setInterval(fetchBalances, 1000); //1 saniyede bir güncelle
 
     return () => clearInterval(interval); // Component unmount olduğunda temizle
   }, []);
