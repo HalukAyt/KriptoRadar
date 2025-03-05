@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ScrollView, StyleSheet, Text, View, StatusBar, TextInput, Button, Alert } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, StatusBar, TextInput, Button, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import LivePrice from '../LivePrice';
 import TradingViewChart from '../TradingViewChart';
@@ -13,9 +13,11 @@ export default function Home() {
   const [btcBalance, setBtcBalance] = useState('0'); // BTC bakiyesi
   const [usdtBalance, setUsdtBalance] = useState('0'); // USDT bakiyesi
   const [limitOrders, setLimitOrders] = useState<any[]>([]); // Limit emirlerini saklayacağımız state
+  const [loading, setLoading] = useState(false); // Yükleniyor durumu için state
 
   // Bakiyeleri güncelleyen fonksiyon
   const fetchBalances = async () => {
+    setLoading(true);
     try {
       const btc = await getBtcBalance();
       const usdt = await getUsdtBalance();
@@ -24,16 +26,19 @@ export default function Home() {
     } catch (error) {
       console.error('Bakiye çekme hatası:', error);
     }
+    setLoading(false);
   };
 
   // Limit emirlerini çekmek için fonksiyon
   const fetchLimitOrders = async () => {
+    setLoading(true);
     try {
       const orders = await getLimitOrders(); // Limit emirlerini al
       setLimitOrders(orders); // Limit emirlerini state'e ata
     } catch (error) {
       console.error('Limit emirlerini alırken hata oluştu:', error);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -84,12 +89,21 @@ export default function Home() {
       Alert.alert('Hata', 'Lütfen geçerli bir alım miktarı ve limit fiyatı girin.');
       return;
     }
+  
+    // USDT ile alım yapacağımız için, BTC miktarını hesapla
+    const btcAmount = (parseFloat(buyAmount) / parseFloat(buyLimitPrice)).toFixed(6); // BTC miktarını hesapla
+  
+    if (parseFloat(btcAmount) <= 0) {
+      Alert.alert('Hata', 'Geçerli bir BTC miktarı hesaplanamadı.');
+      return;
+    }
+  
     try {
-      await tradeLimitOrder('BUY', buyAmount, buyLimitPrice);
+      await tradeLimitOrder('BUY', btcAmount, buyLimitPrice); // Hesaplanan BTC miktarı ile alım işlemi yap
       setBuyAmount(''); // Input'u temizle
       setBuyLimitPrice(''); // Input'u temizle
       fetchBalances(); // Bakiyeleri güncelle
-      Alert.alert('Başarı', 'Limit alım emri başarıyla verildi!');
+      Alert.alert('Başarı', `Limit alım emri başarıyla verildi! ${btcAmount} BTC @ ${buyLimitPrice} USDT`);
     } catch (error) {
       console.error('Limit alım hatası:', error);
       Alert.alert('Hata', 'Limit alım emri başarısız.');
@@ -112,6 +126,8 @@ export default function Home() {
       Alert.alert('Hata', 'Limit satım emri başarısız.');
     }
   };
+
+  
 
   return (
     <ScrollView style={styles.container}>
@@ -223,5 +239,5 @@ const styles = StyleSheet.create({
   orderContainer: { borderRadius: 20, padding: 20, marginBottom: 20 },
   orderItem: { marginBottom: 10 },
   orderText: { color: '#fff' },
-  title: { textAlign: 'center', fontSize: 32, fontWeight: '900', color: '#ffffff', marginBottom: 20 }
+  title: { textAlign: 'center', fontSize: 32, fontWeight: '900', color: '#ffffff', marginBottom: 20 },
 });
